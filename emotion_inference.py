@@ -185,14 +185,15 @@ def load_predictor(root: Union[str, Path] = "."):
         hf_model.to(device)
         hf_model.eval()
     else:
+        model_folder = root_path / "model" if (root_path / "model").exists() else root_path
         primary_rnn, primary_vocab = _load_rnn_bundle(
-            root_path / "model", rnn_cfg, len(labels), device
+            model_folder, rnn_cfg, len(labels), device
         )
 
-    # 2. Load BiLSTM+Attention model for token-level attention weights
+    # 2. Load BiLSTM+Attention model for token-level attention weights (checks both subfolder and root)
     attn_rnn = None
     attn_vocab = None
-    attn_dir = root_path / "attention_model"
+    attn_dir = root_path / "attention_model" if (root_path / "attention_model").exists() else root_path
     attn_cfg = {
         "emb_dim": rnn_cfg.get("emb_dim", 100),
         "hidden_size": rnn_cfg.get("hidden_size", 128),
@@ -231,10 +232,31 @@ def load_predictor(root: Union[str, Path] = "."):
                 max_length=max_len,
                 padding=True,
             )
-            inputs = {k: v.to(device) for k, v in inputs.items()}
+            inputs_dev = {k: v.to(device) for k, v in inputs.items()}
             with torch.no_grad():
-                logits = hf_model(**inputs).logits
+                outputs = hf_model(**inputs_dev, output_attentions=True)
+                logits = outputs.logits
                 probs_t = torch.softmax(logits, dim=-1)[0].cpu().numpy()
+
+                # Fallback: Extract attention from DistilBERT if BiLSTM weights aren't loaded
+                if attn_list is None and getattr(outputs, "attentions", None) is not None:
+                    last_layer_attn = outputs.attentions[-1][0]
+                    cls_attn = last_layer_attn.mean(dim=0)[0]
+                    input_ids = inputs["input_ids"][0].tolist()
+                    raw_hf_tokens = hf_tokenizer.convert_ids_to_tokens(input_ids)
+
+                    valid_tokens, valid_weights = [], []
+                    for tok, w in zip(raw_hf_tokens, cls_attn.cpu().tolist()):
+                        if tok not in hf_tokenizer.all_special_tokens:
+                            clean_tok = tok.replace("##", "")
+                            if clean_tok:
+                                valid_tokens.append(clean_tok)
+                                valid_weights.append(float(w))
+
+                    if valid_weights:
+                        total_w = sum(valid_weights) or 1.0
+                        tokens_out = valid_tokens
+                        attn_list = [w / total_w for w in valid_weights]
         else:
             w_t, l_t, tokens_out = _encode_tokens(raw_tokens, primary_vocab, max_len)
             with torch.no_grad():
