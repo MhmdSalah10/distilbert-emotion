@@ -1,6 +1,7 @@
 {
   "best_model": "DistilBERT",
   "model_type": "transformer",
+  "hub_repo": "MhmdSalah/distilbert-emotion",
   "labels": [
     "joy",
     "sadness",
