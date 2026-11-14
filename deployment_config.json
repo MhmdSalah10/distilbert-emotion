@@ -1,0 +1,65 @@
+{
+  "best_model": "DistilBERT",
+  "model_type": "transformer",
+  "labels": [
+    "joy",
+    "sadness",
+    "anger",
+    "fear",
+    "surprise",
+    "disgust"
+  ],
+  "rnn": {
+    "rnn_type": "lstm",
+    "bidirectional": true,
+    "use_attention": true,
+    "emb_dim": 100,
+    "hidden_size": 128,
+    "max_len": 64,
+    "dropout": 0.3
+  },
+  "metrics": {
+    "accuracy": 0.7875,
+    "macro_f1": 0.6891,
+    "weighted_f1": 0.7939,
+    "val_macro_f1": 0.6931
+  },
+  "all_models": [
+    {
+      "Model": "LSTM",
+      "Accuracy": 0.6502,
+      "Macro_F1": 0.5931,
+      "Weighted_F1": 0.669,
+      "Best_Val_Macro_F1": 0.5785,
+      "Epochs": 8,
+      "Train_Time_Min": 0.43
+    },
+    {
+      "Model": "GRU",
+      "Accuracy": 0.6519,
+      "Macro_F1": 0.5698,
+      "Weighted_F1": 0.6684,
+      "Best_Val_Macro_F1": 0.5503,
+      "Epochs": 5,
+      "Train_Time_Min": 0.37
+    },
+    {
+      "Model": "BiLSTM+Attention",
+      "Accuracy": 0.6906,
+      "Macro_F1": 0.602,
+      "Weighted_F1": 0.7081,
+      "Best_Val_Macro_F1": 0.593,
+      "Epochs": 10,
+      "Train_Time_Min": 1.11
+    },
+    {
+      "Model": "DistilBERT",
+      "Accuracy": 0.7875,
+      "Macro_F1": 0.6891,
+      "Weighted_F1": 0.7939,
+      "Best_Val_Macro_F1": 0.6931,
+      "Epochs": 3,
+      "Train_Time_Min": 2.41
+    }
+  ]
+}
